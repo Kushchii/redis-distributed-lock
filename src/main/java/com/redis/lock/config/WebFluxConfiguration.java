@@ -16,15 +16,15 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 @RequiredArgsConstructor
 public class WebFluxConfiguration implements WebFluxConfigurer {
 
-    //Executing the payment on a single request
-
     public static final String TRANSACTIONS = "/api/transactions";
+    public static final String CALLBACK = "/api/callback";
 
     @Bean
     public RouterFunction<ServerResponse> singleStepPaymentRouterFunction(
             TransactionHandler handler) {
         return route()
                 .POST(TRANSACTIONS, handler::transactions)
+                .POST(CALLBACK, handler::callback)
                 .build();
     }
 }

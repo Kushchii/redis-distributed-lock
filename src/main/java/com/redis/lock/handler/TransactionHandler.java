@@ -1,5 +1,6 @@
 package com.redis.lock.handler;
 
+import com.redis.lock.api.request.CallbackRequest;
 import com.redis.lock.api.request.TransactionsRequest;
 import com.redis.lock.service.TransactionService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,12 @@ public class TransactionHandler extends BaseHandler {
     public Mono<ServerResponse> transactions(ServerRequest request) {
         return request.bodyToMono(TransactionsRequest.class)
                 .flatMap(transactionService::transactions)
+                .flatMap(it -> toServerResponse(HttpStatus.OK, it));
+    }
+
+    public Mono<ServerResponse> callback(ServerRequest request) {
+        return request.bodyToMono(CallbackRequest.class)
+                .flatMap(transactionService::callback)
                 .flatMap(it -> toServerResponse(HttpStatus.OK, it));
     }
 }

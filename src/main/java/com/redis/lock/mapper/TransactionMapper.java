@@ -9,7 +9,7 @@ public class TransactionMapper {
 
     public TransactionsEntity toEntity(TransactionsRequest request) {
         var transaction = new TransactionsEntity();
-        transaction.setId(request.getId());
+        transaction.setTransactionId(request.getId());
         transaction.setAmount(request.getAmount());
         transaction.setUserId(request.getUserId());
         transaction.setCurrency(request.getCurrency());

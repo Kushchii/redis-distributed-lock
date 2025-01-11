@@ -1,6 +1,7 @@
 package com.redis.lock.persistent.postgres.entity;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -11,8 +12,12 @@ import java.util.UUID;
 @Table("transactions")
 public class TransactionsEntity {
 
+    @Id
     @Column("id")
-    private UUID id;
+    private Long id;
+
+    @Column("transaction_id")
+    private UUID transactionId;
 
     @Column("status")
     private String status;
