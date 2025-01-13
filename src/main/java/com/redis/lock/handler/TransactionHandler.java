@@ -21,12 +21,14 @@ public class TransactionHandler extends BaseHandler {
     private final TransactionService transactionService;
 
     public Mono<ServerResponse> transactions(ServerRequest request) {
+        log.info("Transaction request received ");
         return request.bodyToMono(TransactionsRequest.class)
                 .flatMap(transactionService::transactions)
                 .flatMap(it -> toServerResponse(HttpStatus.OK, it));
     }
 
     public Mono<ServerResponse> callback(ServerRequest request) {
+        log.info("Callback request received ");
         return request.bodyToMono(CallbackRequest.class)
                 .flatMap(transactionService::callback)
                 .flatMap(it -> toServerResponse(HttpStatus.OK, it));
