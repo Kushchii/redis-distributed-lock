@@ -26,6 +26,9 @@ import reactor.test.StepVerifier;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -172,16 +175,6 @@ public class TransactionHandlerTest {
         given(rLockReactive.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).willReturn(Mono.just(true));
         given(rLockReactive.unlock()).willReturn(Mono.empty());
 
-
-        var transactionMono = webTestClient.post()
-                .uri("/api/transactions")
-                .bodyValue(transactionsRequest)
-                .exchange()
-                .expectStatus().isOk()
-                .returnResult(TransactionsResponse.class)
-                .getResponseBody()
-                .single();
-
         CallbackRequest callbackRequest = new CallbackRequest();
         callbackRequest.setId(UUID.fromString("223dc9a8-81e7-4bee-afc8-4cd83aae380d"));
         callbackRequest.setStatus("success");
@@ -193,25 +186,48 @@ public class TransactionHandlerTest {
             return Mono.just(entity);
         });
 
-        var callbackMono = Mono.delay(Duration.ofSeconds(1))
-                .then(webTestClient.post()
-                        .uri("/api/callback")
-                        .bodyValue(callbackRequest)
-                        .exchange()
-                        .expectStatus().isOk()
-                        .returnResult(TransactionsResponse.class)
-                        .getResponseBody()
-                        .single());
+        var scheduler = Executors.newScheduledThreadPool(2);
 
-        StepVerifier.create(Mono.zip(transactionMono, callbackMono))
-                .consumeNextWith(tuple -> {
-                    TransactionsResponse transactionResponse = tuple.getT1();
-                    TransactionsResponse callbackResponse = tuple.getT2();
+        var transactionFuture = CompletableFuture.supplyAsync(() -> webTestClient.post()
+                .uri("/api/transactions")
+                .bodyValue(transactionsRequest)
+                .exchange()
+                .expectStatus().isOk()
+                .returnResult(TransactionsResponse.class)
+                .getResponseBody()
+                .single()
+                .block());
 
-                    assertEquals("Transaction processed successfully", transactionResponse.getMessage());
-                    assertEquals("Callback processed successfully", callbackResponse.getMessage());
-                })
-                .verifyComplete();
+        var callbackFuture = CompletableFuture.supplyAsync(() -> {
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+            return webTestClient.post()
+                    .uri("/api/callback")
+                    .bodyValue(callbackRequest)
+                    .exchange()
+                    .expectStatus().isOk()
+                    .returnResult(TransactionsResponse.class)
+                    .getResponseBody()
+                    .single()
+                    .block();
+        }, scheduler);
+
+        CompletableFuture.allOf(transactionFuture, callbackFuture).thenAccept(v -> {
+            try {
+                var transactionResponse = transactionFuture.get();
+                var callbackResponse = callbackFuture.get();
+
+                assertEquals("Transaction processed successfully", transactionResponse.getMessage());
+                assertEquals("Callback processed successfully", callbackResponse.getMessage());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }).join();
+
+        scheduler.shutdown();
 
         verify(transactionMapper).toEntity(any(TransactionsRequest.class));
         verify(transactionRepository, times(2)).save(any(TransactionsEntity.class));
