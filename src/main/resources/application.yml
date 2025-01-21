@@ -1,5 +1,3 @@
-server:
-  port: 8080
 spring:
   application:
     name: transaction_service
@@ -22,3 +20,7 @@ spring:
   jackson:
     deserialization:
       fail-on-unknown-properties: false
+
+redis:
+  host: localhost
+  port: 6379

@@ -27,7 +27,7 @@ public abstract class BaseFunctionalTest {
     private static final PostgreSQLContainer PSQL_CONTAINER = (PostgreSQLContainer) new PostgreSQLContainer("postgres:latest")
             .withUsername("root")
             .withPassword("password")
-            .withDatabaseName("pgi")
+            .withDatabaseName("redis_service")
             .withExposedPorts(5432);
 
     private static final GenericContainer REDIS_CONTAINER = new GenericContainer("redis:latest").withExposedPorts(6379);
@@ -46,10 +46,9 @@ public abstract class BaseFunctionalTest {
         registry.add("spring.r2dbc.url", () -> PSQL_CONTAINER.getJdbcUrl().replace(JDBC_PREFIX, R2DBC_PREFIX));
         registry.add("spring.r2dbc.username", PSQL_CONTAINER::getUsername);
         registry.add("spring.r2dbc.password", PSQL_CONTAINER::getPassword);
-        registry.add("pgi.redis.port", REDIS_CONTAINER::getFirstMappedPort);
-        registry.add("pgi.redis.host", REDIS_CONTAINER::getHost);
+        registry.add("redis.host", REDIS_CONTAINER::getHost);
+        registry.add("redis.port", REDIS_CONTAINER::getFirstMappedPort);
     }
-
 
     @BeforeEach
     void setup() {
