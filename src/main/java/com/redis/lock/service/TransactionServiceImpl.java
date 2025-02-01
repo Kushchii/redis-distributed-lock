@@ -36,7 +36,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Mono<TransactionsResponse> transactions(TransactionsRequest request) {
-        var lock = redissonReactiveClient.getLock(TRANSACTION_LOCK_KEY);
+        var lock = redissonReactiveClient.getLock(TRANSACTION_LOCK_KEY + ":" + request.getId());
         return acquireLock(lock, TRANSACTION_OPERATION_TYPE)
                 .flatMap(locked -> locked ? processTransactionAndSave(request) : Mono.error(new IllegalStateException("Failed to acquire lock for transaction")))
                 .flatMap(this::processTransaction)
@@ -60,7 +60,8 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private Mono<Boolean> acquireLock(RLockReactive lock, String operationType) {
-        return lock.tryLock(LOCK_WAIT_TIME_SECONDS, LOCK_LEASE_TIME_SECONDS, TimeUnit.SECONDS)
+        long threadId = System.nanoTime();
+        return lock.tryLock(LOCK_WAIT_TIME_SECONDS, LOCK_LEASE_TIME_SECONDS, TimeUnit.SECONDS, threadId)
                 .doOnSuccess(locked -> {
                     if (locked) {
                         log.info("Lock acquired successfully for operation: {}", operationType);

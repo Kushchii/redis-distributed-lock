@@ -1,3 +1,5 @@
+package com.redis.lock;
+
 import com.redis.lock.api.request.CallbackRequest;
 import com.redis.lock.api.request.TransactionsRequest;
 import com.redis.lock.api.response.TransactionsResponse;
@@ -8,26 +10,17 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import static com.redis.lock.BaseTest.random;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RedisFunctionalTest extends BaseFunctionalTest {
 
     private static final UUID TRANSACTION_ID = UUID.fromString("221dc9a8-81e7-4bee-afc8-3cd83aae580d");
-    private static final String USER_ID = "1e0d2473-1396-4d4b-a8b0-9f2c2efef805";
-    private static final BigDecimal AMOUNT = new BigDecimal("1.00");
-    private static final String CURRENCY = "UAH";
-    private static final String DESCRIPTION = "T-shirt";
-    private static final String TRANSACTION_STATUS_PENDING = "pending";
     private static final String CALLBACK_STATUS_SUCCESS = "success";
 
     private TransactionsRequest createTransactionRequest() {
-        var request = new TransactionsRequest();
+        var request = random(TransactionsRequest.class);
         request.setId(TRANSACTION_ID);
-        request.setStatus(TRANSACTION_STATUS_PENDING);
-        request.setUserId(USER_ID);
-        request.setAmount(AMOUNT);
-        request.setCurrency(CURRENCY);
-        request.setDescription(DESCRIPTION);
         return request;
     }
 

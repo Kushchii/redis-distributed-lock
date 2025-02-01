@@ -1,4 +1,5 @@
-import com.redis.lock.DistributedLockRedisApplication;
+package com.redis.lock;
+
 import com.redis.lock.persistent.repository.TransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
